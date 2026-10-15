@@ -5,6 +5,7 @@ package service
 import (
 	"reflect"
 
+	"springlab/internal/audit"
 	"springlab/pkg/aop"
 )
 
@@ -22,8 +23,8 @@ func (p *catalogServiceAopProxy) TargetSource() any { return p.target }
 
 var catalogServiceAopMethods = []*aop.Method{
 	{Package: "springlab.internal.service", Type: "CatalogService", Name: "FindByID", Exported: true},
-	{Package: "springlab.internal.service", Type: "CatalogService", Name: "FindAll", Exported: true},
-	{Package: "springlab.internal.service", Type: "CatalogService", Name: "Remove", Exported: true},
+	{Package: "springlab.internal.service", Type: "CatalogService", Name: "FindAll", Exported: true, Annotations: []any{audit.Audited{Action: "CATALOG_LIST", LogArguments: true}}},
+	{Package: "springlab.internal.service", Type: "CatalogService", Name: "Remove", Exported: true, Annotations: []any{audit.Audited{Action: "CATALOG_REMOVE"}}},
 }
 
 func (p *catalogServiceAopProxy) FindByID(a0 int64) (string, error) {

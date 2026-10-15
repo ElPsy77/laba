@@ -31,6 +31,7 @@ func (s *catalogService) FindByID(id int64) (string, error) {
 	return fmt.Sprintf("Item no. %d", id), nil
 }
 
+// @Audited(action = "CATALOG_LIST", logArguments = true)
 func (s *catalogService) FindAll(limit int) ([]string, error) {
 	sleep(300) // a deliberately "slow" method
 	items := make([]string, 0, limit)
@@ -40,6 +41,7 @@ func (s *catalogService) FindAll(limit int) ([]string, error) {
 	return items, nil
 }
 
+// @Audited(action = "CATALOG_REMOVE")
 func (s *catalogService) Remove(id int64) (string, error) {
 	if id <= 0 {
 		return "", &IllegalArgumentError{fmt.Sprintf("Invalid identifier: %d", id)}
