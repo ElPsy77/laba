@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"springlab/internal/app"
+	"springlab/internal/web"
 )
 
 func main() {
@@ -27,6 +28,7 @@ func main() {
 		runtime.Version(), os.Getpid()))
 
 	mux := app.NewRouter(props)
+	web.NewHelloController(props).Register(mux)
 	port := props.Get("server.port", "8080")
 
 	slog.Info(fmt.Sprintf("HTTP server initialized with port %s (http)", port))
