@@ -25,6 +25,7 @@ var catalogServiceAopMethods = []*aop.Method{
 	{Package: "springlab.internal.service", Type: "CatalogService", Name: "FindByID", Exported: true},
 	{Package: "springlab.internal.service", Type: "CatalogService", Name: "FindAll", Exported: true, Annotations: []any{audit.Audited{Action: "CATALOG_LIST", LogArguments: true}}},
 	{Package: "springlab.internal.service", Type: "CatalogService", Name: "Remove", Exported: true, Annotations: []any{audit.Audited{Action: "CATALOG_REMOVE"}}},
+	{Package: "springlab.internal.service", Type: "CatalogService", Name: "RemoveTwice", Exported: true},
 }
 
 func (p *catalogServiceAopProxy) FindByID(a0 int64) (string, error) {
@@ -48,6 +49,15 @@ func (p *catalogServiceAopProxy) FindAll(a0 int) ([]string, error) {
 func (p *catalogServiceAopProxy) Remove(a0 int64) (string, error) {
 	res, err := p.h.Invoke(catalogServiceAopMethods[2], []any{a0}, func(args []any) (any, error) {
 		r, err := p.target.Remove(aop.Arg[int64](args, 0))
+		return r, err
+	})
+	r0, _ := res.(string)
+	return r0, err
+}
+
+func (p *catalogServiceAopProxy) RemoveTwice(a0 int64) (string, error) {
+	res, err := p.h.Invoke(catalogServiceAopMethods[3], []any{a0}, func(args []any) (any, error) {
+		r, err := p.target.RemoveTwice(aop.Arg[int64](args, 0))
 		return r, err
 	})
 	r0, _ := res.(string)

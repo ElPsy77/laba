@@ -1,11 +1,13 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"springlab/internal/app"
 	"springlab/internal/service"
+	"springlab/pkg/aop"
 	"springlab/pkg/ioc"
 )
 
@@ -26,6 +28,27 @@ func (c *CatalogController) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/lab4/item/{id}", c.findByID)
 	mux.HandleFunc("GET /api/lab4/items", c.findAll)
 	mux.HandleFunc("DELETE /api/lab4/item/{id}", c.remove)
+	mux.HandleFunc("GET /api/lab4/proxy", c.proxyInfo)
+	mux.HandleFunc("GET /api/lab4/remove-twice/{id}", c.removeTwice)
+}
+
+// proxyInfo — Listing 6: the actual type of the injected bean.
+func (c *CatalogController) proxyInfo(w http.ResponseWriter, r *http.Request) {
+	app.WriteJSON(w, http.StatusOK, map[string]string{
+		"className":        fmt.Sprintf("%T", c.catalogService),
+		"targetClass":      fmt.Sprintf("%T", aop.TargetOf(c.catalogService)),
+		"isAopProxy":       strconv.FormatBool(aop.IsAopProxy(c.catalogService)),
+		"isCglib":          "false", // Go cannot subclass a struct
+		"isInterfaceProxy": strconv.FormatBool(aop.IsAopProxy(c.catalogService)),
+	})
+}
+
+func (c *CatalogController) removeTwice(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+	respond(w, r, func() (any, error) { return c.catalogService.RemoveTwice(id) })
 }
 
 func (c *CatalogController) findByID(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,7 @@ type CatalogService interface {
 	FindByID(id int64) (string, error)
 	FindAll(limit int) ([]string, error)
 	Remove(id int64) (string, error)
+	RemoveTwice(id int64) (string, error)
 }
 
 func init() {
@@ -47,6 +48,20 @@ func (s *catalogService) Remove(id int64) (string, error) {
 		return "", &IllegalArgumentError{fmt.Sprintf("Invalid identifier: %d", id)}
 	}
 	return fmt.Sprintf("Removed item no. %d", id), nil
+}
+
+// RemoveTwice — Listing 7. Self-invocation: s.Remove is called on the
+// receiver — the real object, not the proxy — so no advice runs for it.
+func (s *catalogService) RemoveTwice(id int64) (string, error) {
+	first, err := s.Remove(id) // self-invocation: via the receiver, past the proxy
+	if err != nil {
+		return "", err
+	}
+	second, err := s.Remove(id + 1) // self-invocation as well
+	if err != nil {
+		return "", err
+	}
+	return first + "; " + second, nil
 }
 
 func sleep(ms int) { time.Sleep(time.Duration(ms) * time.Millisecond) }
