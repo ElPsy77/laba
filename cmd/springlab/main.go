@@ -23,6 +23,7 @@ import (
 	// @ComponentScan: a package takes part in the container only if it is
 	// imported here (directly or through another package). Each package
 	// registers its components in init().
+	_ "springlab/internal/aspect"
 	_ "springlab/internal/autoconfigure" // auto-configurations (.imports)
 	_ "springlab/internal/config"
 	_ "springlab/internal/lifecycle"
