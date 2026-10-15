@@ -23,11 +23,17 @@ import (
 	// @ComponentScan: a package takes part in the container only if it is
 	// imported here (directly or through another package). Each package
 	// registers its components in init().
+	_ "springlab/internal/aspect"
 	_ "springlab/internal/autoconfigure" // auto-configurations (.imports)
 	_ "springlab/internal/config"
 	_ "springlab/internal/lifecycle"
 	_ "springlab/internal/notify"
 	_ "springlab/internal/scope"
+	_ "springlab/internal/service"
+
+	// spring-boot-starter-aop: importing the AOP package switches on the
+	// auto-proxy creator (AopAutoConfiguration).
+	_ "springlab/pkg/aop"
 )
 
 func main() {
