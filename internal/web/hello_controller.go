@@ -9,7 +9,18 @@ import (
 	"time"
 
 	"springlab/internal/app"
+	"springlab/pkg/ioc"
 )
+
+func init() {
+	ioc.Component(NewHelloController)
+}
+
+// Controller is what DispatcherServlet looks for: every bean that
+// implements it contributes its routes.
+type Controller interface {
+	Register(mux *http.ServeMux)
+}
 
 // HelloController is the counterpart of @RestController @RequestMapping("/api").
 type HelloController struct {
