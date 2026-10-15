@@ -15,6 +15,14 @@ type PostConstructor interface{ PostConstruct() }
 // PreDestroyer is the counterpart of @PreDestroy.
 type PreDestroyer interface{ PreDestroy() }
 
+// BeanPostProcessor intervenes in the creation of EVERY bean. AOP proxies
+// are created by one of them, after @PostConstruct (step 7 of the life cycle).
+type BeanPostProcessor interface {
+	PostProcessAfterInitialization(bean any, name string) (any, error)
+}
+
+var bppType = reflect.TypeFor[BeanPostProcessor]()
+
 // CommandLineRunner runs once the context has been refreshed.
 type CommandLineRunner interface{ Run(args []string) error }
 
@@ -28,6 +36,7 @@ type Container struct {
 	closed     bool
 	env        PropertyResolver
 	report     Report
+	processors []BeanPostProcessor
 }
 
 // New reads ALL bean definitions first (the registry of every imported
@@ -83,6 +92,16 @@ func (c *Container) register(d *Definition) error {
 // Refresh pre-instantiates every singleton, as Spring does at start-up:
 // configuration errors surface now, not on first use.
 func (c *Container) Refresh() error {
+	// BeanPostProcessors are created first: they must see every other bean.
+	for _, d := range c.defs {
+		if d.Type.Implements(bppType) {
+			v, err := c.instance(d)
+			if err != nil {
+				return err
+			}
+			c.processors = append(c.processors, v.Interface().(BeanPostProcessor))
+		}
+	}
 	for _, d := range c.defs {
 		if d.Scope == Singleton {
 			if _, err := c.instance(d); err != nil {
@@ -212,6 +231,16 @@ func (c *Container) instance(d *Definition) (reflect.Value, error) {
 	bean := out[0]
 	if pc, ok := bean.Interface().(PostConstructor); ok {
 		pc.PostConstruct() // 3. @PostConstruct
+	}
+	if !d.Type.Implements(bppType) {
+		for _, bpp := range c.processors { // 4. post-processing: the AOP proxy
+			processed, err := bpp.PostProcessAfterInitialization(bean.Interface(), d.Name)
+			if err != nil {
+				return reflect.Value{}, fmt.Errorf("BeanCreationException: Error creating bean "+
+					"with name '%s': %w", d.Name, err)
+			}
+			bean = reflect.ValueOf(processed)
+		}
 	}
 	if d.Scope == Singleton {
 		c.singletons[d.Name] = bean

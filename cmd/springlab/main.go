@@ -28,6 +28,11 @@ import (
 	_ "springlab/internal/lifecycle"
 	_ "springlab/internal/notify"
 	_ "springlab/internal/scope"
+	_ "springlab/internal/service"
+
+	// spring-boot-starter-aop: importing the AOP package switches on the
+	// auto-proxy creator (AopAutoConfiguration).
+	_ "springlab/pkg/aop"
 )
 
 func main() {
