@@ -26,13 +26,19 @@ type Container struct {
 	inCreation map[string]bool
 	created    []string // creation order, destroyed in reverse
 	closed     bool
+	env        PropertyResolver
+	report     Report
 }
 
 // New reads ALL bean definitions first (the registry of every imported
 // package plus the given ready-made instances); objects are created later
 // by Refresh. That is why declaration order does not matter.
-func New(instances map[string]any) (*Container, error) {
+//
+// Conditions (@Profile, @ConditionalOn...) are evaluated while definitions
+// are read: the application's own beans first, auto-configurations last.
+func New(env PropertyResolver, instances map[string]any) (*Container, error) {
 	c := &Container{
+		env:        env,
 		byName:     map[string]*Definition{},
 		singletons: map[string]reflect.Value{},
 		inCreation: map[string]bool{},
@@ -51,9 +57,14 @@ func New(instances map[string]any) (*Container, error) {
 			return nil, err
 		}
 	}
-	for _, d := range registry {
-		if err := c.register(d); err != nil {
-			return nil, err
+	for _, group := range [][]*Definition{registry, autoRegistry} {
+		for _, d := range group {
+			if c.env != nil && !c.evaluate(d) {
+				continue
+			}
+			if err := c.register(d); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return c, nil

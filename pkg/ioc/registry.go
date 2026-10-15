@@ -35,6 +35,8 @@ type Definition struct {
 	Order      int
 	Qualifiers map[int]string // constructor argument index -> bean name
 	Source     string         // where it was declared: component / @Bean method
+	Conditions []Condition    // @Profile, @ConditionalOn... — checked before registration
+	AutoConfig string         // non-empty for beans of an auto-configuration class
 	seq        int
 }
 
@@ -46,6 +48,9 @@ func Primary() Option        { return func(d *Definition) { d.Primary = true } }
 func Fallback() Option       { return func(d *Definition) { d.Fallback = true } }
 func Order(n int) Option     { return func(d *Definition) { d.Order = n } }
 func ScopePrototype() Option { return func(d *Definition) { d.Scope = Prototype } }
+func When(c ...Condition) Option {
+	return func(d *Definition) { d.Conditions = append(d.Conditions, c...) }
+}
 func Qualifier(arg int, bean string) Option {
 	return func(d *Definition) { d.Qualifiers[arg] = bean }
 }
@@ -62,6 +67,22 @@ func Component(constructor any, opts ...Option) {
 		d.Name = decapitalize(baseTypeName(d.Type))
 	}
 	registry = append(registry, d)
+}
+
+// autoRegistry holds auto-configurations: they are processed AFTER the
+// application's own beans, so @ConditionalOnMissingBean can yield to them.
+var autoRegistry []*Definition
+
+// AutoConfiguration registers a bean of an auto-configuration class — the
+// Go counterpart of a class listed in META-INF/spring/...AutoConfiguration.imports.
+func AutoConfiguration(class string, factory any, opts ...Option) {
+	d := newDefinition(factory, class, opts)
+	d.AutoConfig = class
+	if d.Name == "" {
+		d.Name = decapitalize(funcName(factory))
+	}
+	d.Source = class + "#" + funcName(factory)
+	autoRegistry = append(autoRegistry, d)
 }
 
 // Bean registers a factory function as a bean — a @Bean method inside a

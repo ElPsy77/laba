@@ -1,0 +1,30 @@
+# resources/application.yml — the shared configuration (Listing 2)
+spring:
+  application:
+    name: spring-lab
+
+server:
+  port: 8080
+
+app:
+  owner: Karimbayev Makzhan       # put your own details here
+  group: 2502IS
+  date-pattern: yyyy-MM-dd HH:mm:ss
+  mail:
+    from: no-reply@iitu.kz
+    retry-count: 3
+    timeout: 5s
+    enabled: true
+  ui:                             # individual assignment, variant 1
+    theme: LIGHT
+    items-per-page: 20
+
+logging:
+  level:
+    kz.iitu: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,env,configprops,conditions
