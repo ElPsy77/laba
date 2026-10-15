@@ -11,16 +11,19 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
 	"springlab/internal/app"
 	"springlab/internal/web"
+	"springlab/pkg/env"
 	"springlab/pkg/ioc"
 
 	// @ComponentScan: a package takes part in the container only if it is
 	// imported here (directly or through another package). Each package
 	// registers its components in init().
+	_ "springlab/internal/autoconfigure" // auto-configurations (.imports)
 	_ "springlab/internal/config"
 	_ "springlab/internal/lifecycle"
 	_ "springlab/internal/notify"
@@ -31,24 +34,39 @@ func main() {
 	started := time.Now()
 	printBanner()
 
-	props, err := app.LoadProperties("resources/application.properties")
+	environment, err := env.Load(env.Options{
+		Args:         os.Args[1:],
+		ResourcesDir: "resources", // inside the artefact ("classpath")
+		ConfigDir:    "config",    // ./config next to the binary
+	})
 	if err != nil {
 		fail(err)
 	}
+	configureLogging(environment)
+
 	slog.Info(fmt.Sprintf("Starting SpringLabApplication using Go %s with PID %d",
 		runtime.Version(), os.Getpid()))
+	if p := environment.ActiveProfiles(); len(p) > 0 {
+		slog.Info(fmt.Sprintf("The following %d profile is active: \"%s\"", len(p), strings.Join(p, "\", \"")))
+	} else {
+		slog.Info("No active profile set, falling back to 1 default profile: \"default\"")
+	}
 
-	// 1. read every bean definition, 2. create the singletons
-	ctx, err := ioc.New(map[string]any{"applicationProperties": props})
+	// 1. read every bean definition (conditions are checked here),
+	// 2. create the singletons
+	ctx, err := ioc.New(environment, map[string]any{"environment": environment})
 	if err != nil {
 		fail(err)
+	}
+	if environment.Debug {
+		printConditionsReport(ctx.ConditionsReport())
 	}
 	if err := ctx.Refresh(); err != nil {
 		fail(err)
 	}
 
 	// DispatcherServlet: collect every controller bean.
-	mux := app.NewRouter(props)
+	mux := app.NewRouter()
 	controllers, err := ioc.BeansOfType[web.Controller](ctx)
 	if err != nil {
 		fail(err)
@@ -57,7 +75,7 @@ func main() {
 		c.Register(mux)
 	}
 
-	port := props.Get("server.port", "8080")
+	port := environment.Get("server.port", "8080")
 	srv := &http.Server{Addr: ":" + port, Handler: mux}
 	slog.Info(fmt.Sprintf("HTTP server initialized with port %s (http)", port))
 	slog.Info(fmt.Sprintf("Started SpringLabApplication in %.3f seconds",
@@ -94,8 +112,35 @@ func main() {
 }
 
 func fail(err error) {
+	var bind *env.BindErrors
+	if errors.As(err, &bind) {
+		fmt.Fprint(os.Stderr, bind.Error())
+		os.Exit(1)
+	}
 	slog.Error("Application run failed", "error", err)
 	os.Exit(1)
+}
+
+// configureLogging applies logging.level.kz.iitu (the application's loggers).
+func configureLogging(e *env.Environment) {
+	levels := map[string]slog.Level{"TRACE": slog.LevelDebug, "DEBUG": slog.LevelDebug,
+		"INFO": slog.LevelInfo, "WARN": slog.LevelWarn, "ERROR": slog.LevelError}
+	if lvl, ok := levels[strings.ToUpper(e.Get("logging.level.kz.iitu", "INFO"))]; ok {
+		slog.SetLogLoggerLevel(lvl)
+	}
+}
+
+// printConditionsReport is what --debug prints: the auto-configuration report.
+func printConditionsReport(r ioc.Report) {
+	fmt.Print("\n============================\nCONDITIONS EVALUATION REPORT\n============================\n\n")
+	fmt.Print("Positive matches:\n-----------------\n\n")
+	for _, o := range r.Positive {
+		fmt.Printf("   %s matched:\n      - %s %s (%s)\n\n", o.Source, o.Condition, o.Message, o.Bean)
+	}
+	fmt.Print("Negative matches:\n-----------------\n\n")
+	for _, o := range r.Negative {
+		fmt.Printf("   %s:\n      Did not match:\n         - %s %s (%s)\n\n", o.Source, o.Condition, o.Message, o.Bean)
+	}
 }
 
 func printBanner() {

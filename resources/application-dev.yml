@@ -1,0 +1,13 @@
+# application-dev.yml — read only when the dev profile is active
+server:
+  port: 8081
+app:
+  mail:
+    enabled: false             # no mail is sent in development
+    retry-count: 1
+  ui:
+    theme: DARK
+    items-per-page: 5
+logging:
+  level:
+    kz.iitu: DEBUG

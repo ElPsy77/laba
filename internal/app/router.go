@@ -8,7 +8,7 @@ import (
 
 // NewRouter is the counterpart of DispatcherServlet: it maps paths to handlers.
 // Controllers register their own routes; every other path is 404.
-func NewRouter(props Properties) *http.ServeMux {
+func NewRouter() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", notFound)
 	return mux

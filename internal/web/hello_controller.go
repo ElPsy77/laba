@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"springlab/internal/app"
+	"springlab/pkg/env"
 	"springlab/pkg/ioc"
 )
 
@@ -28,7 +29,7 @@ type HelloController struct {
 }
 
 // NewHelloController injects the settings through the constructor.
-func NewHelloController(props app.Properties) *HelloController {
+func NewHelloController(props *env.Environment) *HelloController {
 	return &HelloController{owner: props.Get("app.owner", "unknown")}
 }
 

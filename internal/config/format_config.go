@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"springlab/internal/app"
+	"springlab/pkg/env"
 	"springlab/pkg/ioc"
 )
 
@@ -25,7 +25,7 @@ type DateTimeFormatter struct {
 // ReportDateFormatter — Listing 6. The bean name is the function name:
 // "reportDateFormatter". The pattern comes from
 // @Value("${app.date-pattern:dd.MM.yyyy HH:mm:ss}").
-func ReportDateFormatter(props app.Properties) *DateTimeFormatter {
+func ReportDateFormatter(props *env.Environment) *DateTimeFormatter {
 	pattern := props.Get("app.date-pattern", "dd.MM.yyyy HH:mm:ss")
 	return &DateTimeFormatter{Pattern: pattern, layout: javaToGoLayout(pattern)}
 }

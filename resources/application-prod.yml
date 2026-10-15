@@ -1,0 +1,10 @@
+# application-prod.yml — read only when the prod profile is active
+server:
+  port: 8080
+app:
+  mail:
+    enabled: true
+    retry-count: 5
+logging:
+  level:
+    kz.iitu: WARN

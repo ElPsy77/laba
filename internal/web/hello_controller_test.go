@@ -7,11 +7,12 @@ import (
 	"testing"
 
 	"springlab/internal/app"
+	"springlab/pkg/env"
 )
 
 func newMux() *http.ServeMux {
-	mux := app.NewRouter(app.Properties{"app.owner": "Karimbayev Makzhan, 2502IS"})
-	NewHelloController(app.Properties{"app.owner": "Karimbayev Makzhan, 2502IS"}).Register(mux)
+	mux := app.NewRouter()
+	NewHelloController(env.FromMap(map[string]string{"app.owner": "Karimbayev Makzhan, 2502IS"})).Register(mux)
 	return mux
 }
 

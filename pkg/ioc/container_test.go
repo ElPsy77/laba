@@ -22,7 +22,7 @@ func fresh(t *testing.T, fn func()) *Container {
 	registry = nil
 	defer func() { registry = saved }()
 	fn()
-	c, err := New(nil)
+	c, err := New(nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
