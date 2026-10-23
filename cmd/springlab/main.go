@@ -25,6 +25,7 @@ import (
 	// registers its components in init().
 	_ "springlab/internal/aspect"
 	_ "springlab/internal/autoconfigure" // auto-configurations (.imports)
+	_ "springlab/internal/catalog"
 	_ "springlab/internal/config"
 	_ "springlab/internal/lifecycle"
 	_ "springlab/internal/notify"
