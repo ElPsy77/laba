@@ -1,0 +1,54 @@
+{{/*
+  Listing 5. Go html/template instead of Thymeleaf; the same three things are used:
+    th:text="${title}"           ->  {{.title}}
+    th:if="${message}"           ->  {{with .message}} ... {{end}}
+    th:each="book : ${books}"    ->  {{range .books}} ... {{end}}
+    th:href="@{/css/app.css}"    ->  /css/app.css
+  Like th:text, {{...}} escapes HTML, so a title such as <b> is shown as text.
+  This is a template comment: it never reaches the browser.
+*/ -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<main>
+    <p class="crumbs"><a href="/">Home</a> / <a href="/books">Catalogue</a></p>
+    <h1>{{.title}}</h1>
+
+    {{with .message}}<p class="flash">{{.}}</p>{{end}}
+
+    <form class="filter" method="get" action="/books">
+        <input name="author" placeholder="Filter by author" value="{{.author}}">
+        <button type="submit">Filter</button>
+        {{if .author}}<a href="/books">Clear</a>{{end}}
+    </form>
+
+    <table>
+        <tr><th>#</th><th>Title</th><th>Author</th><th>Year</th></tr>
+        {{range .books}}
+        <tr>
+            <td>{{.ID}}</td>
+            <td>{{.Title}}</td>
+            <td>{{.Author}}</td>
+            <td>{{.Year}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="4" class="empty">No books found</td></tr>
+        {{end}}
+    </table>
+
+    <h2>Add a book</h2>
+    <form class="add" method="post" action="/books">
+        <input name="title" placeholder="Title" required>
+        <input name="author" placeholder="Author" required>
+        <input name="year" type="number" placeholder="Year" required>
+        <button type="submit">Add</button>
+    </form>
+</main>
+</body>
+</html>
